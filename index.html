@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Robots Learning to Recover</title>
-<meta name="description" content="Videos from my robot experiments on what a learned policy does after a mistake, and how corrections and retraining changed that.">
+<meta name="description" content="Videos and images supplementing my paper “Helping Robots Recover From Their Mistakes”: the setup, the task, how I collected data and trained, and what the robot did on its own.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
@@ -53,6 +53,7 @@ h2 { font-size: 26px; font-weight: 600; margin: 72px 0 12px; padding-bottom: 8px
 h3 { font-size: 19px; font-weight: 600; margin: 32px 0 8px; }
 p { margin: 0 0 16px; }
 .meta { font-size: 14px; color: var(--ink-faint); margin: 0 0 16px; }
+.lede { font-size: 17.5px; color: var(--ink); }
 a { color: var(--accent); }
 b, strong { color: var(--ink); font-weight: 600; }
 ul, ol { padding-left: 22px; margin: 0 0 16px; }
@@ -70,13 +71,6 @@ figcaption p:last-child { margin: 0; }
 .tag.mixed { background: var(--mixed-bg); color: var(--mixed-ink); }
 .watch { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; margin: 0 0 10px; }
 .watch .label { display: block; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
-.note { border-left: 3px solid var(--line); padding: 2px 0 2px 14px; margin: 20px 0; font-size: 15px; }
-.tw { overflow-x: auto; margin: 16px 0; border: 1px solid var(--line); border-radius: 8px; }
-table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--card); }
-th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { color: var(--ink); font-weight: 600; }
-tr:last-child td { border-bottom: 0; }
-td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* control timeline under the correction clip */
 .ctl { margin: 10px 0 0; }
 .ctl .bar { position: relative; display: flex; height: 28px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
@@ -96,57 +90,54 @@ footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line);
 <header>
   <p class="meta">Devi Amarsaikhan · Laboratory for AI, Robotics &amp; Automation (LARA), UC Davis · Fall 2026</p>
   <h1>Robots Learning to Recover</h1>
+  <p class="lede">This page supplements my paper, <em>Helping Robots Recover From Their Mistakes</em>, with videos and images from my experiments in the lab. It covers the setup, the task, how I collected data and trained the robot, and what the robot did when it ran on its own.</p>
 </header>
 
-<h2 id="task">Moving a block onto a printed flower</h2>
-<p>The robot arm has to grasp a blue flower-shaped block, carry it across the table, and release it on a flower printed on a sheet of paper. That’s the whole task. I chose something this simple so I could watch closely what the arm does when an attempt goes wrong, and train many versions of it to compare.</p>
-<p>The arm is one of three on a robot in our lab called GIAVA, built in the style of the low-cost ALOHA platform. Only one arm moves in these clips. It has six joints and a gripper with two fingers. Cameras record from above the table, from a low angle at the side, and from the gripper itself, and each clip below shows two of those views side by side.</p>
+<h2 id="setup">The setup</h2>
+<p>The setup is a tabletop version of ALOHA with a few modifications. Three robot arms are mounted around a table, each with six joints and a two-finger gripper. Each arm has a camera on its gripper, and two more cameras watch the table, one from above and one from a low angle at the side. I control the arms by teleoperation, using a virtual-reality headset and hand controllers. Only one arm moves in these experiments.</p>
+
+<h2 id="task">The task</h2>
+<p>The robot has to pick up a blue flower-shaped block and place it on the matching flower printed on a sheet of paper.</p>
 <figure>
   <img src="assets/img/flower_start.jpg" alt="View from the overhead camera at the start of an attempt. A blue flower-shaped block sits on the wooden table. To its left is a white sheet printed with a blue flower, the target, and a blue oval." loading="lazy">
   <figcaption>The starting scene from the overhead camera. The block is on the right, and the printed flower is on the white sheet to its left.</figcaption>
 </figure>
-<p>The software that moves the arm is called a <em>policy</em>. It looks at the camera images and the arm’s joint positions and decides the next movement. Nobody writes its rules by hand. It learns them from recordings of me doing the task.</p>
-<figure id="placements">
-  <img src="assets/img/placements_128.jpg" alt="Overhead camera view of the table with the block's starting position from every recorded episode drawn in. A dense cluster sits in the center, and a dashed ring of squares surrounds it with empty space in between." loading="lazy">
-  <figcaption>Where the block started in each of the 128 episodes I trained on, seen from the overhead camera. The dense middle holds my first 50 demonstrations and the correction round. The dashed squares are 22 later demonstrations around a wider region. I deliberately left the space between them empty.</figcaption>
-</figure>
 
-<h2 id="missed">A missed grasp, and the arm keeps going</h2>
+<h2 id="demo">Recording demonstrations</h2>
 <figure>
-  <div class="cliphead"><span class="tag auto">Robot on its own</span><span>Real time · 15 s · 12 September 2026</span></div>
-  <video src="assets/video/missed_grasp.mp4" poster="assets/video/missed_grasp.jpg" controls muted playsinline preload="metadata"
-    aria-label="The gripper closes in front of the block without holding it, then moves to the printed flower and opens with nothing inside."></video>
-  <figcaption>
-    <p class="watch"><span class="label">What to watch for</span>Around 6 seconds, the gripper closes just in front of the block. In the left view, the block stays on the table while the arm lifts and moves away.</p>
-    <p>The arm carries on as if the block were in its gripper. It travels to the printed flower and opens its fingers there at about 10 seconds, with nothing to release. This early policy was trained on 10 of my demonstrations, all of them successful.</p>
-    <p>Left, the low side camera. Right, the gripper camera.</p>
-  </figcaption>
-</figure>
-<p>Every example this policy learned from showed a clean grasp followed by a carry. None showed what to do when the block stays behind, so it has no example of going back for it.</p>
-
-<h2 id="demo">Showing the robot what to do</h2>
-<figure>
-  <div class="cliphead"><span class="tag human">Human demonstration</span><span>Real time · 16 s · 3 September 2026</span></div>
+  <div class="cliphead"><span class="tag human">Human demonstration</span><span>Real time · 16 s · Left: overhead camera · Right: gripper camera</span></div>
   <video src="assets/video/demo_ep0.mp4" poster="assets/video/demo_ep0.jpg" controls muted playsinline preload="metadata"
-    aria-label="A demonstration. Guided by me through remote control, the gripper approaches the block, closes around it, carries it, and releases it on the printed flower."></video>
+    aria-label="A demonstration. Guided by me through teleoperation, the gripper approaches the block, closes around it, carries it, and releases it on the printed flower."></video>
   <figcaption>
     <p class="watch"><span class="label">What to watch for</span>At 5.2 seconds I squeeze the trigger and the fingers start to close.</p>
-    <p>I’m controlling the arm the whole time here.</p>
-    <p>Left, the overhead camera. Right, the gripper camera.</p>
   </figcaption>
 </figure>
-<p>I demonstrate by remote control, or <em>teleoperation</em>. I wear a virtual-reality headset and hold a hand controller. When I press a button to take control, the gripper follows my hand, and a trigger opens and closes its fingers.</p>
-<p>While I do this, the computer records 50 times a second. Each time it saves what the cameras see, where each joint is, and the movement command I’m sending. Together they make one training example, pairing what the robot saw with what I did next.</p>
+<p>This is one of my demonstrations, recorded through teleoperation with the headset and hand controllers. I control the arm the whole time. I recorded 50 demonstrations like this one.</p>
 <figure class="optional">
   <img src="assets/img/teleop_photo.jpg" alt="Me wearing a virtual-reality headset and holding a hand controller while guiding the robot arm." loading="lazy" onerror="this.closest('figure').remove()">
   <figcaption>Demonstrating with the headset and hand controller.</figcaption>
 </figure>
-<p>To spread the starting positions evenly, I set the block on a printed grid, then removed the grid sheet before recording so the policy never saw it.</p>
+<figure id="grid">
+  <img src="assets/img/start_grid.jpg" alt="Close-up of the overhead camera view. A dashed three-by-three grid surrounds the blue block on the table, to the right of the printed flower target." loading="lazy">
+  <figcaption>The dashed grid marks the area where the block started in my 50 demonstrations, drawn from the recorded starting positions. In every demonstration, I moved the block to the printed flower.</figcaption>
+</figure>
+
+<h2 id="missed">Testing the first policy</h2>
+<p>After training a first policy on these 50 demonstrations, I placed the block in each of the nine squares of the grid above and let the robot run on its own. It had seen the block near all of these positions, so in principle it could do the task. It placed the block on the flower in only 2 of the 9 attempts. This is one common way it failed.</p>
+<figure>
+  <div class="cliphead"><span class="tag auto">Robot on its own</span><span>Real time · 13 s · Left: low side camera · Right: gripper camera</span></div>
+  <video src="assets/video/base50_missed_grasp.mp4" poster="assets/video/base50_missed_grasp.jpg" controls muted playsinline preload="metadata"
+    aria-label="The gripper closes on the block, but the block slips out to the side. The arm lifts and moves to the printed flower without it."></video>
+  <figcaption>
+    <p class="watch"><span class="label">What to watch for</span>Around 6 seconds, the fingers close but the block slips out to the side. In the left view, the block stays on the table while the arm lifts and carries on to the flower with nothing in its grip.</p>
+  </figcaption>
+</figure>
+<p>Every example this policy learned from showed a clean grasp followed by a carry. None showed what to do when the block stays behind, so it had no example of going back for it.</p>
 
 <h2 id="takeover">Taking over to correct it, then handing control back</h2>
-<p>For the next round, I let the policy drive and watched. When I saw a mistake coming, I pressed the button and took over, made the correction, and let go. The policy then continued from wherever the arm was. The procedure is based on a method called HG-DAgger.</p>
+<p>For the next round, I let the policy drive and watched. When I saw a mistake coming, I pressed the button and took over, made the correction, and let go. The policy then continued from wherever the arm was. This procedure is based on a method called HG-DAgger.</p>
 <figure>
-  <div class="cliphead"><span class="tag mixed">Robot, with me taking over</span><span>Real time · 15 s · 10 September 2026</span></div>
+  <div class="cliphead"><span class="tag mixed">Robot, with me taking over</span><span>Real time · 15 s · Left: overhead camera · Right: gripper camera</span></div>
   <video id="corr-video" src="assets/video/correction_ep90.mp4" poster="assets/video/correction_ep90.jpg" controls muted playsinline preload="metadata"
     aria-label="The policy drives the gripper toward the block. I take over for about four seconds to line up and close the gripper, then the policy carries the block to the flower." aria-describedby="corr-ctl-desc"></video>
   <div class="ctl" aria-hidden="true">
@@ -161,80 +152,67 @@ footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line);
   </div>
   <figcaption>
     <p id="corr-ctl-desc" class="watch"><span class="label">What to watch for</span>Between about 1 and 3 seconds, the right finger comes down in line with the edge of the block instead of beside it. I take over at 3.1 seconds, shift the gripper so the block sits between both fingers, and close them. At 7.1 seconds I let go, and the policy carries the block to the flower and releases it.</p>
-    <p>The bar under the video shows who was in control as it plays. The takeover times aren’t stored directly, so I estimated them from the recorded commands, to within about a tenth of a second. Left, the overhead camera. Right, the gripper camera.</p>
+    <p>The bar under the video shows who was in control as it plays. I estimated the takeover times from the recorded commands, to within about a tenth of a second.</p>
   </figcaption>
 </figure>
-<p>Watching closely is what makes this work. I take over just before the mistake, so the recording shows how to get out of a situation the policy itself got into, which my clean demonstrations never showed.</p>
-<p>When I trained on these recordings, every moment counted equally, including the policy’s own approach in the seconds before I took over. Published research handles this differently. Sirius uses the moment a person takes over as a signal. It gives the robot’s actions just before the takeover no weight in training and puts more emphasis on the person’s correction. I didn’t do that, and my recorder didn’t yet mark which moments were mine.</p>
-<p>I recorded 57 episodes this way on 10 September 2026. In 12 of them the policy finished on its own and I never took over. Across the episodes where the recorder counted, about 37% of the recorded moments were mine and 63% were the policy’s.</p>
+<p>I take over just before the mistake, so the recording shows how to get out of a situation the policy itself got into, which my clean demonstrations never showed.</p>
+<p>I recorded 57 episodes this way. In 12 of them the policy finished on its own and I never took over.</p>
 
 <h2 id="retrained">After retraining, a recovery</h2>
-<p>I retrained the policy on 94 episodes. Those were my 50 demonstrations plus the 44 correction-round episodes in which I had taken over and the block ended on the flower. Then I let it run on its own.</p>
+<p>I retrained the policy on 94 episodes: my 50 demonstrations plus the 44 correction episodes in which I had taken over and the block ended on the flower. Then I let it run on its own.</p>
 <figure>
-  <div class="cliphead"><span class="tag auto">Robot on its own</span><span>Real time · 24 s · 12 September 2026</span></div>
+  <div class="cliphead"><span class="tag auto">Robot on its own</span><span>Real time · 24 s · Left: low side camera · Right: gripper camera</span></div>
   <video src="assets/video/dagger_selfcorrect.mp4" poster="assets/video/dagger_selfcorrect.jpg" controls muted playsinline preload="metadata"
     aria-label="The retrained policy's first approach pushes the block without grasping it. The arm moves around the block, grasps it on a later try, and sets it on the printed flower."></video>
   <figcaption>
     <p class="watch"><span class="label">What to watch for</span>The first approach, around 4 to 7 seconds, doesn’t end in a grasp, and the block shifts. The arm doesn’t carry on empty this time. It moves around the block, closes on it at about 12 seconds, and sets it on the flower at about 16 seconds.</p>
-    <p>My note written while watching said “initial approach failed… corrected to go to the object properly and grasped well enough.”</p>
-    <p>Left, the low side camera. Right, the gripper camera.</p>
   </figcaption>
 </figure>
-<p>That evening I tested this policy and four earlier ones on the same nine starting positions. The retrained policy got the block onto the flower in 8 of its 9 attempts, and two of those attempts recovered from a bad first approach like the one above. The other four policies managed 1 to 3 each.</p>
-<p>All five policies ran that evening, one after another. Before each attempt I lined the block up with a faded image of the matching scene from the first policy’s run, so every policy faced the same nine positions to within about a pixel in the overhead camera. Each policy ran its nine attempts as one block rather than alternating position by position. I scored every attempt from the note I wrote while watching.</p>
-<div class="tw"><table>
-      <thead><tr><th scope="col">Policy</th><th scope="col">Reached the block</th><th scope="col">Grasped it</th><th scope="col">Placed it on the flower</th></tr></thead>
-      <tbody>
-        <tr><td>Retrained with my corrections (94 episodes)</td><td class="n">9 of 9</td><td class="n">8 of 9</td><td class="n">8 of 9</td></tr>
-        <tr><td>My first 50 demonstrations</td><td class="n">9 of 9</td><td class="n">3 of 9</td><td class="n">2 of 9</td></tr>
-        <tr><td>10 demonstrations, also given the block’s position as numbers</td><td class="n">8 of 9</td><td class="n">3 of 9</td><td class="n">3 of 9</td></tr>
-        <tr><td>10 demonstrations, camera images only</td><td class="n">7 of 9</td><td class="n">2 of 9</td><td class="n">2 of 9</td></tr>
-        <tr><td>25 demonstrations, also given the block’s position as numbers</td><td class="n">9 of 9</td><td class="n">3 of 9</td><td class="n">1 of 9</td></tr>
-      </tbody>
-    </table></div>
-<div class="note">
-  <p><b>This doesn’t show the corrections alone caused the improvement.</b> Compared with the policy trained on my first 50 demonstrations, the retrained one also had more data, covered a slightly wider spread of starting positions, and was trained with different settings. Any of those could have helped. Nine attempts per policy also leaves a lot of uncertainty, so only the large gap here means much.</p>
-  <p style="margin:0">Results also moved between runs. The same policy, on the same 17 positions, placed the block 8 times one day and 4 times the next. Another placed it 1 time in 5 and then 4 in 5 on the same positions ten minutes later.</p>
-</div>
+<p>On the same nine starting positions, the retrained policy placed the block on the flower in 8 of 9 attempts, compared with 2 of 9 for the policy trained on my first 50 demonstrations. Two of those 8 recovered from a bad first approach like the one above. The retrained policy also had more data and slightly different training settings, so this isn’t a controlled test of the corrections alone, but the jump is large.</p>
 
 <h2 id="nudge">Adjustments I didn’t teach</h2>
-<p>Later I recorded 22 more demonstrations spread around a region about 4.7 times larger than the first one (the dashed squares in the <a href="#placements">starting-position map</a>), and trained new versions of the policy on 128 episodes in total. Sometimes these versions did things I hadn’t deliberately demonstrated.</p>
+<p>Later I recorded 22 more demonstrations from a wider area around the first grid and trained new versions of the policy on 128 episodes in total.</p>
+<figure id="placements">
+  <img src="assets/img/placements_128.jpg" alt="Overhead camera view of the table with the block's starting position from every recorded episode drawn in. A dense cluster sits in the center, and a dashed ring of squares surrounds it with empty space in between." loading="lazy">
+  <figcaption>Where the block started in all 128 training episodes. The dense middle holds my first 50 demonstrations and the correction round. The dashed squares are the 22 later demonstrations.</figcaption>
+</figure>
+<p>Sometimes these versions did things I hadn’t deliberately demonstrated.</p>
 <figure>
-  <div class="cliphead"><span class="tag auto">Robot on its own</span><span>Real time · 27 s · September 2026</span></div>
+  <div class="cliphead"><span class="tag auto">Robot on its own</span><span>Real time · 27 s · Left: gripper camera · Right: overhead camera</span></div>
   <video src="assets/video/nudge_then_place.mp4" poster="assets/video/nudge_then_place.jpg" controls muted playsinline preload="metadata"
     aria-label="The fingertips push the block across the table instead of closing on it. Afterward the arm grasps the block and releases it on the printed flower."></video>
   <figcaption>
     <p class="watch"><span class="label">What to watch for</span>From about 2 to 13 seconds, the fingertips push the block along the table instead of closing around it. In the overhead view on the right, you can see the block move.</p>
     <p>After the push, the arm lines up with the block, grasps it at about 19 seconds, and releases it on the flower at about 25 seconds.</p>
-    <p>Left, the gripper camera. Right, the overhead camera.</p>
   </figcaption>
 </figure>
 <p>I can describe what the arm did, but not why it did it. The recording doesn’t show whether the push made the grasp easier, or whether the policy would have grasped the block without it. I hadn’t taught this push-then-grasp sequence on purpose, and that’s what caught my attention.</p>
-<p>Two more attempts from the same family of policies.</p>
-  <figure>
-    <div class="cliphead"><span class="tag auto">Robot on its own</span><span>Real time · 26 s</span></div>
-    <video src="assets/video/reapproach.mp4" poster="assets/video/reapproach.jpg" controls muted playsinline preload="metadata"
-      aria-label="The gripper closes beside the block without holding it, opens, moves back to the block, and grasps it."></video>
-    <figcaption><p><b>Closed on nothing, then went back.</b> The fingers close beside the block at about 7 seconds, open again, and move back to it. The arm grasps the block at about 18 seconds and carries it to the flower. Left, gripper camera. Right, overhead camera.</p></figcaption>
-  </figure>
-  <figure>
-    <div class="cliphead"><span class="tag auto">Robot on its own</span><span>4× speed · 25 s (about 1½ minutes real)</span></div>
-    <video src="assets/video/upright.mp4" poster="assets/video/upright.jpg" controls muted playsinline preload="metadata"
-      aria-label="Sped up four times. The block tips onto its side, the arm pushes it and stands it back up on the second try, then grasps it and sets it down next to the printed flower."></video>
-    <figcaption><p><b>Stood a fallen block back up.</b> The block tips onto its side. The arm pushes it and, on the second try, it’s upright again. The arm then grasps it and sets it down next to the flower, not on it. Left, gripper camera. Right, overhead camera.</p></figcaption>
-  </figure>
-<p>These clips come from several versions trained on the same 128 episodes, which differ in what extra information they receive, such as the block’s position given as numbers. Each of those 128 episodes ended with the block on the flower, but that describes how they ended, not every movement inside them. 50 are my original demonstrations, 22 are the wider-region demonstrations, and 56 come from the correction round. 44 of those 56 include a takeover, so they also contain the policy’s own mistakes in the moments before I stepped in.</p>
+<p>These were imitation learning policies, so the arm wasn’t exploring. It was reproducing patterns from my recordings. Still, seeing behavior like this is what led me to wonder whether the arm could explore on its own.</p>
+<p>Two more attempts from the same family of policies:</p>
+<figure>
+  <div class="cliphead"><span class="tag auto">Robot on its own</span><span>Real time · 26 s · Left: gripper camera · Right: overhead camera</span></div>
+  <video src="assets/video/reapproach.mp4" poster="assets/video/reapproach.jpg" controls muted playsinline preload="metadata"
+    aria-label="The gripper closes beside the block without holding it, opens, moves back to the block, and grasps it."></video>
+  <figcaption><p><b>Closed on nothing, then went back.</b> The fingers close beside the block at about 7 seconds, open again, and move back to it. The arm grasps the block at about 18 seconds and carries it to the flower.</p></figcaption>
+</figure>
+<figure>
+  <div class="cliphead"><span class="tag auto">Robot on its own</span><span>4× speed · 25 s (about 1½ minutes real) · Left: gripper camera · Right: overhead camera</span></div>
+  <video src="assets/video/upright.mp4" poster="assets/video/upright.jpg" controls muted playsinline preload="metadata"
+    aria-label="Sped up four times. The block tips onto its side, the arm pushes it and stands it back up on the second try, then grasps it and sets it down next to the printed flower."></video>
+  <figcaption><p><b>Stood a fallen block back up.</b> The block tips onto its side. The arm pushes it and, on the second try, it’s upright again. The arm then grasps it and sets it down next to the flower, not on it.</p></figcaption>
+</figure>
+<p>All 128 training episodes ended with the block on the flower, but not every movement inside them was clean. 44 come from the correction round, so they also contain the policy’s own mistakes in the moments before I stepped in.</p>
 
 <h2 id="next">Why this points me toward language and rewards</h2>
-<p>Each round of improvement was slow. Recording 50 demonstrations took up to two hours, training took several hours or ran overnight, and testing took about half a day. Every correction also meant physically taking over and performing the movement, even when the change I wanted was as simple as “move slightly left before closing the gripper.”</p>
+<p>Each round of improvement was slow. Recording 50 demonstrations took up to two hours, training took several hours or ran overnight, and testing took about half a day. Every correction also meant taking over and performing the movement myself, even when the change I wanted was as simple as “move slightly left before closing the gripper.”</p>
 <p>Two research directions from other labs speak to this. I have not implemented either of them myself.</p>
 <ul>
   <li><b>Correcting with words.</b> In Yell At Your Robot, a person changes what the robot does by giving a new instruction instead of taking over the controls. The researchers then use those spoken corrections to improve how the robot chooses its own instructions.</li>
-  <li><b>Learning from rewards.</b> DSRL keeps an existing policy fixed and trains a second, small policy to steer it, using a reward that scores how each attempt turned out. The policy it steers is a diffusion policy, which builds its movement commands by refining random numbers step by step.</li>
+  <li><b>Learning from rewards.</b> DSRL keeps an existing diffusion policy fixed and trains a second, small policy to steer it, using a reward that scores how each attempt turned out.</li>
 </ul>
 <p>The pushing and re-grasping clips above are why the second direction appeals to me. If a robot sometimes produces adjustments I never demonstrated, a reward for getting the block onto the flower might help it find and keep the useful ones, without me having to perform every recovery myself.</p>
 
-<footer>All videos and photos were recorded on the GIAVA robot at LARA, UC Davis, between September and October 2026. Clips have no sound.</footer>
+<footer>All videos and photos were recorded on a tabletop ALOHA setup at LARA, UC Davis, between September and October 2026. Clips have no sound.</footer>
 </main>
 <script>
 (function () {

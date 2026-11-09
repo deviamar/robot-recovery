@@ -1,14 +1,13 @@
 # Robots Learning to Recover
 
-Videos from my robot experiments on what a learned policy does after a mistake, and how
-corrections and retraining changed that.
+Videos and images supplementing my paper "Helping Robots Recover From Their Mistakes".
 
 Static site, no build step. Published with GitHub Pages at
 https://deviamar.github.io/robot-recovery/
 
 ## Add the headset photo
 
-The "Showing the robot what to do" section has an optional slot for a photo of me in the VR
+The "Recording demonstrations" section has an optional slot for a photo of me in the VR
 headset. Save it as `assets/img/teleop_photo.jpg` and it appears. While the file is missing,
 the slot is hidden.
 
@@ -16,6 +15,12 @@ the slot is hidden.
 
 `demo_ep0` and `correction_ep90` are cut from the recorded flower dataset by
 `/home/devi/deviamar.github.io/tools/recovery/encode_supplement_clips.sh`.
+
+`base50_missed_grasp` is rollout `20260912_194930_ep06` (policy trained on the first 50
+demos), cropped to the low + wrist tiles like the other rollout clips in `encode_clips.sh`.
+
+`assets/img/start_grid.jpg` is a crop of `flower_start.jpg` with a 3x3 grid drawn over the
+area of the dense start cluster in `placements_128.jpg` (same camera, scaled 640 -> 1012).
 
 ## Preview locally
 
